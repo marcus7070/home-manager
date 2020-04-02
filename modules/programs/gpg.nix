@@ -4,6 +4,7 @@ with lib;
 
 let
   cfg = config.programs.gpg;
+  defaultHome = ".gnupg";
 
   cfgText =
     concatStringsSep "\n"
@@ -28,6 +29,16 @@ in {
         GnuPG configuration options. Available options are described
         in the gpg manpage:
         <link xlink:href="https://gnupg.org/documentation/manpage.html"/>.
+      '';
+    };
+
+    home = mkOption {
+      type = types.str;
+      default = defaultHome;
+      example = ".config/gnupg";
+      description = ''
+        Home path for GPG. If different to the default, then the GNUPGHOME
+        environment variable is set.
       '';
     };
   };
@@ -56,6 +67,13 @@ in {
 
     home.packages = [ pkgs.gnupg ];
 
-    home.file.".gnupg/gpg.conf".text = cfgText;
+    home.sessionVariables = if !(cfg.home == defaultHome) then {
+      GNUPGHOME = cfg.home;
+    } else { };
+
+    home.file."gpg.conf" = {
+      text = cfgText;
+      target = cfg.home + "/gpg.conf";
+    };
   };
 }
